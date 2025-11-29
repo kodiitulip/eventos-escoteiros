@@ -1,0 +1,10 @@
+{
+  "workbench.startupEditor": "none",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "npm.packageManager": "bun",
+  "prettier.enableDebugLogs": true,
+  "prettier.documentSelectors": ["*.{jsx,tsx,html,css,js,ts}"],
+  "prettier.withNodeModules": true
+}
