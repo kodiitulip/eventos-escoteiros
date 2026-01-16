@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { ScoutLogo } from '@/components/ScoutLogo';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function Auth() {
   const router = useRouter();
@@ -22,19 +24,39 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock login - would use real auth in implementation
-    setTimeout(() => {
+    try {
+      const cred = await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
+      const token = await cred.user.getIdToken();
+
+      await fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+    } catch (err) {
+      console.error(err);
       toast({
-        title: 'Login realizado!',
-        description: 'Bem-vindo ao sistema.'
+        title: 'Houve um erro ao fazer login',
+        description: 'Tente novamente mais tarde',
+        variant: 'destructive'
       });
       router.push('/');
-      setIsLoading(false);
-    }, 1000);
+    } finally {
+      setTimeout(() => {
+        toast({
+          title: 'Login realizado!',
+          description: 'Bem-vindo ao sistema.'
+        });
+        router.push('/');
+        setIsLoading(false);
+      }, 1000);
+    }
+
+    // Mock login - would use real auth in implementation
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-linear-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4'>
       <div className='w-full max-w-md space-y-6 animate-fade-in'>
         <div className='flex flex-col items-center space-y-4'>
           <ScoutLogo className='h-20' />

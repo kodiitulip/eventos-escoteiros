@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +24,7 @@ export default function LoginPage() {
         body: JSON.stringify({ token })
       });
 
-      router.replace('/dashboard');
+      redirect('/dashboard');
     } catch (err) {
       console.error(err);
       alert('Erro no login');
