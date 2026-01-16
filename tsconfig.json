@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/api-old/users/update/route.ts.old", "app/api-old/users/reset-password/route.ts.old", "app/api-old/users/make-admin/route.ts.old", "app/api-old/users/delete/route.ts.old", "app/api-old/users/create/route.ts.old", "app/api-old/session/route.ts.old", "app/api-old/scouts/update/route.ts.old", "app/api-old/scouts/delete/route.ts.old", "app/api-old/scouts/create/route.ts.old", "app/api-old/incricoes/route.ts.old", "app/api-old/events/route.ts.old", "app/api-old/auth/validate/route.ts.old"  ],
   "exclude": ["node_modules"]
 }
