@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,17 +13,9 @@ import { BranchBadge } from '@/components/BranchBadge';
 import { PaymentStatusBadge } from '@/components/PaymentStatusBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-// Mock data for UI shell
-const mockEvent = {
-  id: '1',
-  name: 'Acampamento de Páscoa',
-  date: '2025-04-18',
-  start_time: '08:00',
-  end_time: '18:00',
-  event_type: 'geral' as const,
-  registration_fee: 150
-};
+import { useAuth } from '@/app/providers/auth-provider';
+import { Event } from '@/types/event.type';
+import { fetchEventByID } from '../queries';
 
 type Participant = {
   id: string;
@@ -49,42 +41,38 @@ const mockParticipants: Participant[] = [
 ];
 
 export default function EventDetail() {
-  const params = useParams();
-  const [participants, setParticipants] = useState(mockParticipants);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { id } = useParams<{ id: Event['id'] }>();
+  const [event, setEvent] = useState<Event>();
 
-  const event = mockEvent;
-  const isPastEvent = new Date(event.date) < new Date();
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth');
+    const load = async () => {
+      const eve = await fetchEventByID(id);
+      if (!eve) notFound();
+      setEvent(eve);
+    };
+    load();
+  }, [user, loading, router, id]);
 
-  const summary = {
-    total: participants.length,
-    paid: participants.filter((p) => p.payment_status === 'pago').length,
-    attended: participants.filter((p) => p.attended).length
-  };
+  if (!event) return null;
 
-  const togglePayment = (participantId: string) => {
-    setParticipants((prev) =>
-      prev.map((p) => {
-        if (p.id === participantId) {
-          return {
-            ...p,
-            payment_status: p.payment_status === 'pago' ? 'pendente' : 'pago'
-          };
-        }
-        return p;
-      })
-    );
-  };
+  const isPastEvent = new Date(event.dataFim) < new Date();
+  const dataInicio = new Date(event.dataInicio);
+  const dataFim = new Date(event.dataFim);
+  const participants: Participant[] = mockParticipants;
+
+  // const summary = {
+  //   total: participants.length,
+  //   paid: participants.filter((p) => p.payment_status === 'pago').length,
+  //   attended: participants.filter((p) => p.attended).length
+  // };
+
+  const togglePayment = (participantId: string) => {};
 
   const toggleAttendance = (participantId: string) => {
     if (!isPastEvent) return;
-    setParticipants((prev) =>
-      prev.map((p) => {
-        if (p.id === participantId) {
-          return { ...p, attended: !p.attended };
-        }
-        return p;
-      })
-    );
   };
 
   return (
@@ -101,8 +89,8 @@ export default function EventDetail() {
           </Button>
           <div className='flex-1'>
             <div className='flex items-center gap-3'>
-              <h1 className='text-2xl md:text-3xl font-bold text-foreground'>{event.name}</h1>
-              <BranchBadge branch={event.event_type} />
+              <h1 className='text-2xl md:text-3xl font-bold text-foreground'>{event.nome}</h1>
+              <BranchBadge branch={event.tipo} />
             </div>
           </div>
         </div>
@@ -116,9 +104,7 @@ export default function EventDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-lg font-semibold'>
-                {format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              </p>
+              <p className='text-lg font-semibold'>{format(dataInicio, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
             </CardContent>
           </Card>
 
@@ -131,7 +117,8 @@ export default function EventDetail() {
             </CardHeader>
             <CardContent>
               <p className='text-lg font-semibold'>
-                {event.start_time} - {event.end_time}
+                {dataInicio.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })} -
+                {dataFim.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })}
               </p>
             </CardContent>
           </Card>
@@ -144,9 +131,7 @@ export default function EventDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-lg font-semibold'>
-                {summary.paid}/{summary.total} pagos
-              </p>
+              <p className='text-lg font-semibold'>{event.inscritosCount}</p>
             </CardContent>
           </Card>
 
@@ -156,7 +141,9 @@ export default function EventDetail() {
             </CardHeader>
             <CardContent>
               <p className='text-lg font-semibold text-primary'>
-                {event.registration_fee > 0 ? `R$ ${event.registration_fee.toFixed(2)}` : 'Gratuito'}
+                {event.valor > 0 ?
+                  event.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                : 'Gratuito'}
               </p>
             </CardContent>
           </Card>
@@ -167,7 +154,6 @@ export default function EventDetail() {
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
               <div>
                 <CardTitle>Participantes</CardTitle>
-                <CardDescription>{summary.total} escoteiros inscritos neste evento</CardDescription>
               </div>
               <div className='flex gap-2'>
                 <Button

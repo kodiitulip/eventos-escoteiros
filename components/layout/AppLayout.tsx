@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
-import { ScoutLogo } from '../ScoutLogo';
+import { ScoutLogoX128 } from '../scout-logo';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className='h-14 border-b bg-card flex items-center px-4 gap-4 shrink-0'>
             <SidebarTrigger className='text-foreground md:hidden' />
             <div className='flex items-center gap-3'>
-              <ScoutLogo className='h-10 w-auto' />
+              <ScoutLogoX128 className='size-10 w-auto' />
               <span className='font-semibold text-lg hidden sm:inline text-primary'>14º GEABEG</span>
             </div>
           </header>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,57 +11,46 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-// Mock data for UI shell
-const mockEvents = [
-  {
-    id: '1',
-    name: 'Acampamento de Páscoa',
-    date: '2025-04-18',
-    event_type: 'geral' as const,
-    registration_fee: 150,
-    participants_count: 48,
-    paid_count: 32
-  },
-  {
-    id: '2',
-    name: 'Reunião de Lobinhos',
-    date: '2025-04-12',
-    event_type: 'lobinho' as const,
-    registration_fee: 0,
-    participants_count: 12,
-    paid_count: 12
-  },
-  {
-    id: '3',
-    name: 'Trilha Ecológica',
-    date: '2025-03-22',
-    event_type: 'escoteiro' as const,
-    registration_fee: 30,
-    participants_count: 15,
-    paid_count: 10
-  }
-];
+import { useAuth } from '../providers/auth-provider';
+import { useRouter } from 'next/navigation';
+import { Event } from '@/types/event.type';
+import { fetchAllEvents } from './queries';
 
 export default function Events() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth');
+
+    const load = async () => {
+      const eve = await fetchAllEvents();
+      setEvents(eve);
+    };
+
+    load();
+  }, [user, loading, router]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('todos');
 
-  const filteredEvents = mockEvents.filter((event) => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'todos' || event.event_type === typeFilter;
+  const filteredEvents = events.filter(({ nome, tipo }) => {
+    const matchesSearch = nome.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === 'todos' || tipo === typeFilter;
     return matchesSearch && matchesType;
   });
 
   // Group events by year
   const eventsByYear = filteredEvents.reduce(
     (acc, event) => {
-      const year = new Date(event.date).getFullYear();
+      const year = new Date(event.dataInicio).getFullYear();
       if (!acc[year]) acc[year] = [];
       acc[year].push(event);
       return acc;
     },
-    {} as Record<number, typeof mockEvents>
+    {} as Record<number, Event[]>
   );
 
   return (
@@ -122,35 +111,33 @@ export default function Events() {
               className='space-y-4'>
               <h2 className='text-xl font-semibold text-foreground'>{year}</h2>
               <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                {events.map((event) => (
+                {events.map(({ id, nome, tipo, dataInicio, inscritosCount, valor, limiteVagas }) => (
                   <Link
-                    key={event.id}
-                    href={`/eventos/${event.id}`}>
+                    key={id}
+                    href={`/eventos/${id}`}>
                     <Card className='hover:shadow-md transition-shadow cursor-pointer h-full'>
                       <CardHeader className='pb-2'>
                         <div className='flex items-start justify-between gap-2'>
-                          <CardTitle className='text-base line-clamp-2'>{event.name}</CardTitle>
-                          <BranchBadge branch={event.event_type} />
+                          <CardTitle className='text-base line-clamp-2'>{nome}</CardTitle>
+                          <BranchBadge branch={tipo} />
                         </div>
                         <CardDescription className='flex items-center gap-1'>
                           <Calendar className='h-3 w-3' />
-                          {format(new Date(event.date), "dd 'de' MMMM", { locale: ptBR })}
+                          {format(new Date(dataInicio), "dd 'de' MMMM", { locale: ptBR })}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className='flex items-center justify-between text-sm'>
                           <div className='flex items-center gap-1 text-muted-foreground'>
                             <Users className='h-3 w-3' />
-                            <span>{event.participants_count} participantes</span>
+                            <span>{inscritosCount} participantes</span>
                           </div>
                           <div className='text-muted-foreground'>
-                            {event.paid_count}/{event.participants_count} pagos
+                            {inscritosCount}/{limiteVagas} inscritos
                           </div>
                         </div>
-                        {event.registration_fee > 0 && (
-                          <div className='mt-2 text-sm font-medium text-primary'>
-                            R$ {event.registration_fee.toFixed(2)}
-                          </div>
+                        {valor > 0 && (
+                          <div className='mt-2 text-sm font-medium text-primary'>R$ {valor.toFixed(2)}</div>
                         )}
                       </CardContent>
                     </Card>

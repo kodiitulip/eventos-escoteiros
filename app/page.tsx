@@ -136,15 +136,6 @@ export default function Dashboard() {
                 variant='outline'
                 className='w-full justify-start'
                 asChild>
-                <Link href='/eventos/novo'>
-                  <CalendarPlus className='mr-2 h-4 w-4' />
-                  Cadastrar Novo Evento
-                </Link>
-              </Button>
-              <Button
-                variant='outline'
-                className='w-full justify-start'
-                asChild>
                 <Link href='/escoteiros'>
                   <Users className='mr-2 h-4 w-4' />
                   Gerenciar Escoteiros

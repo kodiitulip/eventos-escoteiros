@@ -1,4 +1,4 @@
-import { Event } from '@/types/event.type';
+import { Event, EventType } from '@/types/event.type';
 
 interface EventFilters {
   nome?: string;
@@ -8,11 +8,12 @@ interface EventFilters {
   dataFim?: Date;
   valorMin?: number;
   valorMax?: number;
+  tipo?: EventType;
   ordenarPor: keyof Event;
   ordem: 'asc' | 'desc';
 }
 
-export function applyEventFilters(events: (Event & { id: string })[], filters: EventFilters) {
+export function applyEventFilters(events: Event[], filters: EventFilters) {
   let result = [...events];
 
   if (filters.nome) {
@@ -43,8 +44,13 @@ export function applyEventFilters(events: (Event & { id: string })[], filters: E
     result = result.filter((e) => e.valor <= filters.valorMax!);
   }
 
+  if (filters.tipo !== undefined) {
+    result = result.filter(({ tipo }) => tipo === filters.tipo!);
+  }
+
   result.sort((a, b) => {
     const field = filters.ordenarPor;
+    if (!a[field] || !b[field]) return 1;
     return (
       filters.ordem === 'desc' ?
         a[field] < b[field] ?

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ import { BranchBadge } from '@/components/BranchBadge';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ScoutEventsDialog } from '@/components/ScoutEventsDialog';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../providers/auth-provider';
 
 // Mock data for UI shell
 const mockScouts = [
@@ -40,6 +42,13 @@ const mockScouts = [
 ];
 
 export default function Scouts() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth');
+  }, [user, loading, router]);
+
   const { toast } = useToast();
   const [scouts, setScouts] = useState(mockScouts);
   const [searchTerm, setSearchTerm] = useState('');

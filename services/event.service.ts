@@ -1,18 +1,13 @@
-import { Event } from '@/types/event.type';
+import { Event, EventType } from '@/types/event.type';
 import { validateEventData } from '@/validators/event.validator';
-import {
-  saveEvent,
-  updateEventInDB,
-  deleteEventFromDB,
-  getEventById,
-  findEventByNameAndDate
-} from '@/repositories/event.repository';
+import { saveEvent, updateEventInDB, getEventById, findEventByNameAndDate } from '@/repositories/event.repository';
 
 import { listAllEvents } from '@/repositories/event.repository';
 import { applyEventFilters } from './event.filter';
 import { mapEventListItem } from './event.mapper';
 
-async function validateUniqueEventName(nome: string, dataInicio: Date, eventId?: string) {
+async function validateUniqueEventName(nome: string, dataInicio: Date | string, eventId?: string) {
+  if (typeof dataInicio === 'string') dataInicio = new Date(dataInicio);
   const existing = await findEventByNameAndDate(nome, dataInicio.toISOString());
 
   if (existing && existing.id !== eventId) {
@@ -28,8 +23,8 @@ export async function createEvent(data: Event) {
     ...data,
     inscritosCount: 0,
     ativo: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toString(),
+    updatedAt: new Date().toString()
   };
 
   const id = await saveEvent(newEvent);
@@ -50,9 +45,10 @@ export async function updateEvent(eventId: string, data: Event) {
 
   validateEventData(data);
   await validateUniqueEventName(data.nome, data.dataInicio, eventId);
+  const [dataIn, existingDataIn] = [new Date(data.dataInicio), new Date(existingEvent.dataInicio)];
 
   if (existingEvent.inscritosCount > 0) {
-    if (data.dataInicio.getTime() !== existingEvent.dataInicio.getTime()) {
+    if (dataIn.getTime() !== existingDataIn.getTime()) {
       throw new Error('Não é possível alterar a data de um evento com inscritos.');
     }
 
@@ -63,7 +59,7 @@ export async function updateEvent(eventId: string, data: Event) {
 
   await updateEventInDB(eventId, {
     ...data,
-    updatedAt: new Date()
+    updatedAt: new Date().toString()
   });
 
   return {
@@ -81,7 +77,7 @@ export async function softDeleteEvent(eventId: string) {
 
   await updateEventInDB(eventId, {
     ativo: false,
-    updatedAt: new Date()
+    updatedAt: new Date().toString()
   });
 
   return {
@@ -105,8 +101,10 @@ export async function listEvents(searchParams: URLSearchParams) {
 
     valorMax: searchParams.get('valorMax') ? Number(searchParams.get('valorMax')) : undefined,
 
-    ordenarPor: (searchParams.get('ordenarPor') as any) || 'dataInicio',
-    ordem: searchParams.get('ordem') === 'desc' ? 'desc' : 'asc',
+    tipo: searchParams.get('tipo') ? (searchParams.get('tipo') as EventType) : undefined,
+
+    ordenarPor: (searchParams.get('ordenarPor') as keyof Event) || 'dataInicio',
+    ordem: (searchParams.get('ordem') === 'desc' ? 'desc' : 'asc') as 'desc' | 'asc',
 
     page: Number(searchParams.get('page') || 1),
     limit: Number(searchParams.get('limit') || 10)

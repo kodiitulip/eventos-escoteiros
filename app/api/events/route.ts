@@ -45,7 +45,8 @@ export async function DELETE(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const result = await listEvents(req);
+    console.log('getting events');
+    const result = await listEvents(new URL(req.url).searchParams);
     return NextResponse.json(result);
   } catch (error: unknown) {
     if (error instanceof Error) {

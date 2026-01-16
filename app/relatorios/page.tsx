@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,8 +10,17 @@ import { FileText, Download, Printer, Calendar, Users, TrendingUp } from 'lucide
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { ShareReportDialog } from '@/components/ShareReportDialog';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../providers/auth-provider';
 
 export default function Reports() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth');
+  }, [user, loading, router]);
+
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState('2025');
   const [selectedBranch, setSelectedBranch] = useState('todos');

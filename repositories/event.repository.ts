@@ -42,14 +42,17 @@ export async function findEventByNameAndDate(
   return null;
 }
 
-export async function listAllEvents(): Promise<(Event & { id: string })[]> {
+export async function listAllEvents(): Promise<Event[]> {
+  console.log('getting snapshot');
   const snapshot = await get(ref(database, EVENTS_PATH));
 
   if (!snapshot.exists()) return [];
+  console.log('got snapshot');
 
   const events = snapshot.val();
 
-  return Object.entries(events).map(([id, data]: any) => ({
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
+  return Object.entries(events).map(([id, data]: [string, any]) => ({
     id,
     ...data
   }));

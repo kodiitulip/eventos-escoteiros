@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScoutLogo } from '@/components/ScoutLogo';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { ScoutLogoX256 } from '@/components/scout-logo';
 
 export default function Auth() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function Auth() {
     <div className='min-h-screen bg-linear-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4'>
       <div className='w-full max-w-md space-y-6 animate-fade-in'>
         <div className='flex flex-col items-center space-y-4'>
-          <ScoutLogo className='h-20' />
+          <ScoutLogoX256 className='size-20' />
           <div className='text-center'>
             <h1 className='text-2xl font-bold text-foreground'>Sistema de Eventos</h1>
             <p className='text-muted-foreground'>14º GEABEG</p>
