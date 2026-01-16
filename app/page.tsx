@@ -2,18 +2,43 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, FileText, TrendingUp, CalendarPlus } from 'lucide-react';
+import { Calendar, Users, FileText, TrendingUp, CalendarPlus, LoaderIcon } from 'lucide-react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { useAuth } from './providers/auth-provider';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
-  // Placeholder stats - will be replaced with real data
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth');
+  }, [user, loading, router]);
+
+  // TODO: remove placeholder
   const stats = {
     totalEvents: 12,
     upcomingEvents: 3,
     totalScouts: 48,
     pendingPayments: 15
   };
+
+  if (loading)
+    return (
+      <AppLayout>
+        <div className='absolute inset-1/2'>
+          <LoaderIcon
+            className='animate-spin'
+            size={40}
+          />
+          <span className='sr-only'>Carregando</span>
+        </div>
+      </AppLayout>
+    );
+
+  if (!user) return null;
 
   return (
     <AppLayout>

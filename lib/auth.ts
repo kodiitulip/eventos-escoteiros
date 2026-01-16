@@ -13,3 +13,5 @@ export async function verifyAuth(req: Request) {
 
   return decodedToken;
 }
+
+export const login = (token: string) => {};

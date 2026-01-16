@@ -25,14 +25,7 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const cred = await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
-      const token = await cred.user.getIdToken();
-
-      await fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
+      await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
     } catch (err) {
       console.error(err);
       toast({
