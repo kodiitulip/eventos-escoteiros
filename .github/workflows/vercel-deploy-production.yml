@@ -1,0 +1,71 @@
+name: Deploy to vercel - Production
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dkershner6/vercel-set-env-action@v3
+        with:
+          token: ${{ secrets.VERCEL_TOKEN }}
+          teamId: ${{ secrets.ORG_ID }}
+          projectName: eventos-scout
+          envVariableKeys:
+            NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID, NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+            NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, NEXT_PUBLIC_FIREBASE_APP_ID
+
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          TARGET_NEXT_PUBLIC_SUPABASE_URL: preview,development,production
+          TYPE_NEXT_PUBLIC_SUPABASE_URL: encrypted
+
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{secrets.NEXT_PUBLIC_FIREBASE_API_KEY}}
+          TARGET_NEXT_PUBLIC_FIREBASE_API_KEY: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_API_KEY: encrypted
+
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}}
+          TARGET_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: encrypted
+
+          NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL}}
+          TARGET_NEXT_PUBLIC_FIREBASE_DATABASE_URL: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_DATABASE_URL: encrypted
+
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID}}
+          TARGET_NEXT_PUBLIC_FIREBASE_PROJECT_ID: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_PROJECT_ID: encrypted
+
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}}
+          TARGET_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: encrypted
+
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}}
+          TARGET_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: encrypted
+
+          NEXT_PUBLIC_FIREBASE_APP_I: ${{secrets.NEXT_PUBLIC_FIREBASE_APP_ID}}
+          TARGET_NEXT_PUBLIC_FIREBASE_APP_I: preview,development,production
+          TYPE_NEXT_PUBLIC_FIREBASE_APP_I: encrypted
+
+          VERCEL_BUILD_SYSTEM_REPORT: 1
+          TARGET_VERCEL_BUILD_SYSTEM_REPORT: preview,development,production
+          TYPE_VERCEL_BUILD_SYSTEM_REPORT: encrypted
+
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-args: '--prod --force'
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          scope: ${{ secrets.ORG_ID }}
