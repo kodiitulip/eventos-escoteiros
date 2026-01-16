@@ -1,4 +1,3 @@
-import { getEventById } from '@/repositories/event.repository';
 import { get } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { ref } from 'firebase/database';

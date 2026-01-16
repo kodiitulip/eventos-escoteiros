@@ -3,7 +3,7 @@ import { EventData } from '@/types/event.type';
 export function validateEventData(event: EventData) {
   const now = new Date();
 
-  if (event.dataInicio < now) {
+  if (new Date(event.dataInicio) < now) {
     throw new Error('A data de início não pode ser no passado.');
   }
 
