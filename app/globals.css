@@ -25,6 +25,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -41,82 +42,188 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* Branch colors */
+  --color-lobinho: var(--lobinho);
+  --color-lobinho-foreground: var(--lobinho-foreground);
+  --color-escoteiro: var(--escoteiro);
+  --color-escoteiro-foreground: var(--escoteiro-foreground);
+  --color-senior: var(--senior);
+  --color-senior-foreground: var(--senior-foreground);
+  --color-pioneiro: var(--pioneiro);
+  --color-pioneiro-foreground: var(--pioneiro-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
 }
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+
+  to {
+    height: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 14º GEABEG - Grupo de Escoteiros do Ar Brigadeiro Eduardo Gomes
+   Palette: Soft warm neutrals with desaturated red accents
+*/
+
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --background: hsl(30 15% 97%);
+  --foreground: hsl(20 10% 25%);
+
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(20 10% 25%);
+
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(20 10% 25%);
+
+  /* GEABEG Red - desaturated and soft */
+  --primary: hsl(352 45% 50%);
+  --primary-foreground: hsl(0 0% 100%);
+
+  /* Warm soft gray for secondary */
+  --secondary: hsl(30 8% 94%);
+  --secondary-foreground: hsl(20 10% 30%);
+
+  --muted: hsl(30 6% 92%);
+  --muted-foreground: hsl(20 8% 50%);
+
+  /* Soft burgundy for accent */
+  --accent: hsl(348 35% 45%);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: hsl(0 50% 55%);
+  --destructive-foreground: hsl(0 0% 100%);
+
+  --border: hsl(30 8% 86%);
+  --input: hsl(30 8% 86%);
+  --ring: hsl(352 40% 50%);
+
+  /* Branch colors - softer */
+  --lobinho: hsl(38 65% 55%);
+  --lobinho-foreground: hsl(0 0% 100%);
+  --escoteiro: hsl(152 40% 40%);
+  --escoteiro-foreground: hsl(0 0% 100%);
+  --senior: hsl(352 45% 50%);
+  --senior-foreground: hsl(0 0% 100%);
+  --pioneiro: hsl(28 25% 45%);
+  --pioneiro-foreground: hsl(0 0% 100%);
+
+  /* Sidebar - soft muted burgundy */
+  --sidebar: hsl(348 25% 35%);
+  --sidebar-foreground: hsl(30 15% 96%);
+  --sidebar-primary: hsl(30 15% 96%);
+  --sidebar-primary-foreground: hsl(348 25% 35%);
+  --sidebar-accent: hsl(348 22% 42%);
+  --sidebar-accent-foreground: hsl(30 15% 96%);
+  --sidebar-border: hsl(348 20% 40%);
+  --sidebar-ring: hsl(30 15% 96%);
+
+  /* Success/Warning states - softer */
+  --success: hsl(152 40% 45%);
+  --success-foreground: hsl(0 0% 100%);
+  --warning: hsl(40 65% 55%);
+  --warning-foreground: hsl(20 10% 18%);
+
+  /* Charts */
+  --chart-1: hsl(352 45% 50%);
+  --chart-2: hsl(152 40% 40%);
+  --chart-3: hsl(38 65% 55%);
+  --chart-4: hsl(28 25% 45%);
+  --chart-5: hsl(348 35% 45%);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: hsl(20 8% 12%);
+  --foreground: hsl(30 10% 90%);
+
+  --card: hsl(20 8% 16%);
+  --card-foreground: hsl(30 10% 90%);
+
+  --popover: hsl(20 8% 16%);
+  --popover-foreground: hsl(30 10% 90%);
+
+  --primary: hsl(352 40% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+
+  --secondary: hsl(20 6% 20%);
+  --secondary-foreground: hsl(30 10% 88%);
+
+  --muted: hsl(20 6% 22%);
+  --muted-foreground: hsl(30 8% 55%);
+
+  --accent: hsl(348 32% 52%);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: hsl(0 45% 52%);
+  --destructive-foreground: hsl(0 0% 100%);
+
+  --border: hsl(20 6% 24%);
+  --input: hsl(20 6% 24%);
+  --ring: hsl(352 40% 58%);
+
+  --sidebar: hsl(20 10% 14%);
+  --sidebar-foreground: hsl(30 10% 90%);
+  --sidebar-primary: hsl(352 40% 58%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(20 8% 20%);
+  --sidebar-accent-foreground: hsl(30 10% 90%);
+  --sidebar-border: hsl(20 6% 20%);
+  --sidebar-ring: hsl(352 40% 58%);
+
+  --chart-1: hsl(352 40% 58%);
+  --chart-2: hsl(152 40% 45%);
+  --chart-3: hsl(38 65% 55%);
+  --chart-4: hsl(28 25% 50%);
+  --chart-5: hsl(348 32% 52%);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
   }
 }
