@@ -1,38 +1,30 @@
 {
-  description = "NextJS Webapp";
-
+  description = "Bun with NextJS";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    systems.url = "github:nix-systems/default";
   };
 
   outputs =
+    { nixpkgs, systems, ... }:
+    let
+      forEachSystem =
+        fn:
+        nixpkgs.lib.genAttrs (import systems) (
+          system:
+          fn (
+            import nixpkgs {
+              inherit system;
+            }
+          )
+        );
+    in
     {
-      self,
-      nixpkgs,
-      flake-utils,
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-        libraryInclde = with pkgs; [ ];
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          buildInputs =
-            with pkgs;
-            [
-              bun
-              eslint
-              prettier
-            ]
-            ++ libraryInclde;
-
-          shellHook = '''';
-
-          env = { };
+      devShells = forEachSystem (pkgs: {
+        default = pkgs.mkShell {
+          packages = [ pkgs.bun ];
         };
-      }
-    );
+      });
+    };
 }
+
