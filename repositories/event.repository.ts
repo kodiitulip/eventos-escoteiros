@@ -1,21 +1,21 @@
 import { ref, push, set, get, update, child } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { Event } from '@/types/event.type';
+import { EventData } from '@/types/event.type';
 
 const EVENTS_PATH = 'events';
 
-export async function saveEvent(event: Event): Promise<string> {
+export async function saveEvent(event: EventData): Promise<string> {
   const newRef = push(ref(database, EVENTS_PATH));
   await set(newRef, event);
   return newRef.key!;
 }
 
-export async function getEventById(id: string): Promise<Event | null> {
+export async function getEventById(id: string): Promise<EventData | null> {
   const snapshot = await get(child(ref(database), `${EVENTS_PATH}/${id}`));
   return snapshot.exists() ? snapshot.val() : null;
 }
 
-export async function updateEventInDB(id: string, data: Partial<Event>) {
+export async function updateEventInDB(id: string, data: Partial<EventData>) {
   await update(ref(database, `${EVENTS_PATH}/${id}`), data);
 }
 
@@ -26,7 +26,7 @@ export async function deleteEventFromDB(id: string) {
 export async function findEventByNameAndDate(
   nome: string,
   dataInicio: string | number
-): Promise<(Event & { id: string }) | null> {
+): Promise<(EventData & { id: string }) | null> {
   const snapshot = await get(ref(database, EVENTS_PATH));
   if (!snapshot.exists()) return null;
 
@@ -42,7 +42,7 @@ export async function findEventByNameAndDate(
   return null;
 }
 
-export async function listAllEvents(): Promise<Event[]> {
+export async function listAllEvents(): Promise<EventData[]> {
   console.log('getting snapshot');
   const snapshot = await get(ref(database, EVENTS_PATH));
 

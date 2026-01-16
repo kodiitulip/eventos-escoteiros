@@ -1,6 +1,6 @@
-import { Event } from '@/types/event.type';
+import { EventData } from '@/types/event.type';
 
-export function validateEventData(event: Event) {
+export function validateEventData(event: EventData) {
   const now = new Date();
 
   if (event.dataInicio < now) {

@@ -12,6 +12,19 @@ import { ArrowLeft, CalendarPlus } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/providers/auth-provider';
+import { EventData, EventType } from '@/types/event.type';
+import { push, ref, set } from 'firebase/database';
+import { database } from '@/lib/firebase';
+
+export type EventFormData = {
+  nome: string;
+  dataInicio: string;
+  dataFim: string;
+  horaInicio: string;
+  horaFim: string;
+  valor: number;
+  tipo: EventType;
+};
 
 export default function CreateEvent() {
   const { user, loading } = useAuth();
@@ -23,20 +36,24 @@ export default function CreateEvent() {
 
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
-    name: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-    event_type: '',
-    registration_fee: ''
+  const [formData, setFormData] = useState<EventFormData>(() => {
+    const d = new Date();
+    return {
+      dataFim: d.toISOString(),
+      dataInicio: d.toISOString(),
+      horaFim: d.toISOString(),
+      horaInicio: d.toISOString(),
+      nome: '',
+      tipo: 'geral',
+      valor: 0
+    };
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
-    if (!formData.name || !formData.date || !formData.event_type) {
+    if (!formData.nome || !formData.dataInicio || !formData.tipo) {
       toast({
         title: 'Campos obrigatórios',
         description: 'Preencha todos os campos obrigatórios.',
@@ -45,13 +62,35 @@ export default function CreateEvent() {
       return;
     }
 
-    // Mock success - in real app would save to database
-    toast({
-      title: 'Evento criado!',
-      description: 'O evento foi cadastrado com sucesso.'
-    });
+    try {
+      const newRef = push(ref(database, 'events'));
+      console.log(formData.dataInicio, formData.horaInicio);
+      const dataInicio = new Date(formData.dataInicio.concat(' ', formData.horaInicio));
+      const dataFim = new Date(formData.dataFim.concat(' ', formData.horaFim));
+      await set(newRef, {
+        dataInicio: dataInicio.toISOString(),
+        dataFim: dataFim.toISOString(),
+        nome: formData.nome,
+        tipo: formData.tipo,
+        valor: formData.valor,
+        ativo: dataFim > new Date(),
+        createdAt: new Date().toISOString()
+      } as EventData);
 
-    router.push('/eventos');
+      toast({
+        title: 'Evento criado!',
+        description: 'O evento foi cadastrado com sucesso.'
+      });
+
+      router.push('/eventos');
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Houve um erro desconhecido',
+        description: 'Tente novamente mais tarde',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -89,59 +128,72 @@ export default function CreateEvent() {
                 <Input
                   id='name'
                   placeholder='Ex: Acampamento de Páscoa'
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  value={formData.nome}
+                  required
+                  onChange={(e) => setFormData((prev) => ({ ...prev, nome: e.target.value }))}
                 />
               </div>
 
+              <div className='space-y-2'>
+                <Label htmlFor='event_type'>Ramo do Evento *</Label>
+                <Select
+                  value={formData.tipo}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, tipo: value as EventType }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione o tipo' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='geral'>Geral (todos os ramos)</SelectItem>
+                    <SelectItem value='lobinho'>Lobinho</SelectItem>
+                    <SelectItem value='escoteiro'>Escoteiro</SelectItem>
+                    <SelectItem value='senior'>Sênior</SelectItem>
+                    <SelectItem value='pioneiro'>Pioneiro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className='grid gap-4 sm:grid-cols-2'>
                 <div className='space-y-2'>
-                  <Label htmlFor='date'>Data *</Label>
+                  <Label htmlFor='date'>Data Inicio *</Label>
                   <Input
                     id='date'
                     type='date'
-                    value={formData.date}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+                    value={formData.dataInicio}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, dataInicio: e.target.value }))}
                   />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='event_type'>Ramo do Evento *</Label>
-                  <Select
-                    value={formData.event_type}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, event_type: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione o tipo' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='geral'>Geral (todos os ramos)</SelectItem>
-                      <SelectItem value='lobinho'>Lobinho</SelectItem>
-                      <SelectItem value='escoteiro'>Escoteiro</SelectItem>
-                      <SelectItem value='senior'>Sênior</SelectItem>
-                      <SelectItem value='pioneiro'>Pioneiro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor='date-end'>Data Fim *</Label>
+                  <Input
+                    id='date-end'
+                    type='date'
+                    value={formData.dataFim}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, dataFim: e.target.value }))}
+                  />
                 </div>
               </div>
 
               <div className='grid gap-4 sm:grid-cols-2'>
                 <div className='space-y-2'>
-                  <Label htmlFor='start_time'>Horário de Início</Label>
+                  <Label htmlFor='start_time'>Horário de Início *</Label>
                   <Input
                     id='start_time'
                     type='time'
-                    value={formData.start_time}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, start_time: e.target.value }))}
+                    value={formData.horaInicio}
+                    required
+                    onChange={(e) => setFormData((prev) => ({ ...prev, horaInicio: e.target.value }))}
                   />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='end_time'>Horário de Término</Label>
+                  <Label htmlFor='end_time'>Horário de Término *</Label>
                   <Input
                     id='end_time'
                     type='time'
-                    value={formData.end_time}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, end_time: e.target.value }))}
+                    value={formData.horaFim}
+                    required
+                    onChange={(e) => setFormData((prev) => ({ ...prev, horaFim: e.target.value }))}
                   />
                 </div>
               </div>
@@ -154,8 +206,8 @@ export default function CreateEvent() {
                   min='0'
                   step='0.01'
                   placeholder='0.00'
-                  value={formData.registration_fee}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, registration_fee: e.target.value }))}
+                  value={formData.valor}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, valor: Number(e.target.value) }))}
                 />
                 <p className='text-xs text-muted-foreground'>Deixe em branco ou 0 para eventos gratuitos.</p>
               </div>

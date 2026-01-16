@@ -1,6 +1,6 @@
 export type EventType = 'geral' | 'lobinho' | 'escoteiro' | 'senior' | 'pioneiro';
 
-export interface Event {
+export interface EventData {
   id?: string;
   nome: string;
   descricao: string;

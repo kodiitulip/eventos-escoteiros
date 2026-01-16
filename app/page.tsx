@@ -6,29 +6,38 @@ import { Calendar, Users, FileText, TrendingUp, CalendarPlus, LoaderIcon } from 
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from './providers/auth-provider';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { get, ref } from 'firebase/database';
+import { database } from '@/lib/firebase';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [stats, setStats] = useState({
+    totalEvents: 0,
+    upcomingEvents: 0,
+    totalScouts: 0,
+    pendingPayments: 0
+  });
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth');
-  }, [user, loading, router]);
 
-  // TODO: remove placeholder
-  const stats = {
-    totalEvents: 12,
-    upcomingEvents: 3,
-    totalScouts: 48,
-    pendingPayments: 15
-  };
+    const load = async () => {
+      const eventsRef = ref(database, 'events');
+      const snap = await get(eventsRef);
+      if (!snap.exists()) return setStats((prev) => ({ ...prev, totalEvents: 0 }));
+      const data = snap.val();
+      setStats((prev) => ({ ...prev, totalEvents: Object.entries(data).length }));
+    };
+    load();
+  }, [user, loading, router]);
 
   if (loading)
     return (
       <AppLayout>
-        <div className='absolute inset-1/2'>
+        <div className='flex h-full items-center justify-center'>
           <LoaderIcon
             className='animate-spin'
             size={40}

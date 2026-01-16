@@ -1,4 +1,4 @@
-import { Event, EventType } from '@/types/event.type';
+import { EventData, EventType } from '@/types/event.type';
 
 interface EventFilters {
   nome?: string;
@@ -9,11 +9,11 @@ interface EventFilters {
   valorMin?: number;
   valorMax?: number;
   tipo?: EventType;
-  ordenarPor: keyof Event;
+  ordenarPor: keyof EventData;
   ordem: 'asc' | 'desc';
 }
 
-export function applyEventFilters(events: Event[], filters: EventFilters) {
+export function applyEventFilters(events: EventData[], filters: EventFilters) {
   let result = [...events];
 
   if (filters.nome) {

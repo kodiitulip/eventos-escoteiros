@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarPlus, Search, Calendar, Users } from 'lucide-react';
+import { CalendarPlus, Search, Calendar, LoaderIcon } from 'lucide-react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
@@ -13,14 +13,14 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '../providers/auth-provider';
 import { useRouter } from 'next/navigation';
-import { Event } from '@/types/event.type';
+import { EventData } from '@/types/event.type';
 import { fetchAllEvents } from './queries';
 
 export default function Events() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth');
@@ -50,8 +50,23 @@ export default function Events() {
       acc[year].push(event);
       return acc;
     },
-    {} as Record<number, Event[]>
+    {} as Record<number, EventData[]>
   );
+
+  if (loading)
+    return (
+      <AppLayout>
+        <div className='flex h-full items-center justify-center'>
+          <LoaderIcon
+            className='animate-spin'
+            size={40}
+          />
+          <span className='sr-only'>Carregando</span>
+        </div>
+      </AppLayout>
+    );
+
+  if (!user) return null;
 
   return (
     <AppLayout>
@@ -111,7 +126,7 @@ export default function Events() {
               className='space-y-4'>
               <h2 className='text-xl font-semibold text-foreground'>{year}</h2>
               <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                {events.map(({ id, nome, tipo, dataInicio, inscritosCount, valor, limiteVagas }) => (
+                {events.map(({ id, nome, tipo, dataInicio, valor }) => (
                   <Link
                     key={id}
                     href={`/eventos/${id}`}>
@@ -127,15 +142,6 @@ export default function Events() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className='flex items-center justify-between text-sm'>
-                          <div className='flex items-center gap-1 text-muted-foreground'>
-                            <Users className='h-3 w-3' />
-                            <span>{inscritosCount} participantes</span>
-                          </div>
-                          <div className='text-muted-foreground'>
-                            {inscritosCount}/{limiteVagas} inscritos
-                          </div>
-                        </div>
                         {valor > 0 && (
                           <div className='mt-2 text-sm font-medium text-primary'>R$ {valor.toFixed(2)}</div>
                         )}

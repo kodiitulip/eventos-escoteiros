@@ -1,4 +1,4 @@
-import { Event, EventType } from '@/types/event.type';
+import { EventData, EventType } from '@/types/event.type';
 import { validateEventData } from '@/validators/event.validator';
 import { saveEvent, updateEventInDB, getEventById, findEventByNameAndDate } from '@/repositories/event.repository';
 
@@ -15,11 +15,11 @@ async function validateUniqueEventName(nome: string, dataInicio: Date | string, 
   }
 }
 
-export async function createEvent(data: Event) {
+export async function createEvent(data: EventData) {
   validateEventData(data);
   await validateUniqueEventName(data.nome, data.dataInicio);
 
-  const newEvent: Event = {
+  const newEvent: EventData = {
     ...data,
     inscritosCount: 0,
     ativo: true,
@@ -36,7 +36,7 @@ export async function createEvent(data: Event) {
   };
 }
 
-export async function updateEvent(eventId: string, data: Event) {
+export async function updateEvent(eventId: string, data: EventData) {
   const existingEvent = await getEventById(eventId);
 
   if (!existingEvent) {
@@ -103,7 +103,7 @@ export async function listEvents(searchParams: URLSearchParams) {
 
     tipo: searchParams.get('tipo') ? (searchParams.get('tipo') as EventType) : undefined,
 
-    ordenarPor: (searchParams.get('ordenarPor') as keyof Event) || 'dataInicio',
+    ordenarPor: (searchParams.get('ordenarPor') as keyof EventData) || 'dataInicio',
     ordem: (searchParams.get('ordem') === 'desc' ? 'desc' : 'asc') as 'desc' | 'asc',
 
     page: Number(searchParams.get('page') || 1),

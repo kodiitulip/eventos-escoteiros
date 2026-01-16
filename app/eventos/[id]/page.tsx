@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,7 +14,7 @@ import { PaymentStatusBadge } from '@/components/PaymentStatusBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/app/providers/auth-provider';
-import { Event } from '@/types/event.type';
+import { EventData } from '@/types/event.type';
 import { fetchEventByID } from '../queries';
 
 type Participant = {
@@ -43,8 +43,8 @@ const mockParticipants: Participant[] = [
 export default function EventDetail() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const { id } = useParams<{ id: Event['id'] }>();
-  const [event, setEvent] = useState<Event>();
+  const { id } = useParams<{ id: EventData['id'] }>();
+  const [event, setEvent] = useState<EventData>();
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth');
@@ -61,7 +61,7 @@ export default function EventDetail() {
   const isPastEvent = new Date(event.dataFim) < new Date();
   const dataInicio = new Date(event.dataInicio);
   const dataFim = new Date(event.dataFim);
-  const participants: Participant[] = mockParticipants;
+  const participants: Participant[] = [];
 
   // const summary = {
   //   total: participants.length,

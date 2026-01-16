@@ -1,17 +1,17 @@
 import { database } from '@/lib/firebase';
-import { Event } from '@/types/event.type';
+import { EventData } from '@/types/event.type';
 import { get, ref } from '@firebase/database';
 import { cache } from 'react';
 
-export const fetchAllEvents = cache(async (): Promise<Event[]> => {
+export const fetchAllEvents = cache(async (): Promise<EventData[]> => {
   const eventsRef = ref(database, 'events');
   const snap = await get(eventsRef);
   if (!snap.exists()) return [];
   const data = snap.val();
-  return Object.entries(data).map(([id, events]) => ({ id, ...(events as Event) }));
+  return Object.entries(data).map(([id, events]) => ({ id, ...(events as EventData) }));
 });
 
-export const fetchEventByID = cache(async (idToFind: Event['id']) => {
+export const fetchEventByID = cache(async (idToFind: EventData['id']) => {
   const events = await fetchAllEvents();
   return events.find(({ id }) => id === idToFind);
 });

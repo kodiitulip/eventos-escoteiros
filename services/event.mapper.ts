@@ -1,6 +1,6 @@
-import { Event } from '@/types/event.type';
+import { EventData } from '@/types/event.type';
 
-export function mapEventListItem(event: Event) {
+export function mapEventListItem(event: EventData) {
   return {
     id: event.id,
     nome: event.nome,

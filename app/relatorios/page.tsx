@@ -34,6 +34,12 @@ export default function Reports() {
 
   return (
     <AppLayout>
+      <div className='flex h-full items-center justify-center'>Não implementado</div>
+    </AppLayout>
+  );
+
+  return (
+    <AppLayout>
       <div className='space-y-6 animate-fade-in'>
         <div>
           <h1 className='text-2xl md:text-3xl font-bold text-foreground'>Relatórios</h1>

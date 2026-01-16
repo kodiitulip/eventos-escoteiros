@@ -109,6 +109,12 @@ export default function Scouts() {
 
   return (
     <AppLayout>
+      <div className='flex h-full items-center justify-center'>Não implementado</div>
+    </AppLayout>
+  );
+
+  return (
+    <AppLayout>
       <div className='space-y-6 animate-fade-in'>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
           <div>
