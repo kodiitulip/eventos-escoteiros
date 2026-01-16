@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
-import { adminDB } from '@/lib/firebase-admin';
+import { adminAuth, adminDB } from '@/lib/firebase-admin';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PATCH(req: Request) {
@@ -8,21 +7,24 @@ export async function PATCH(req: Request) {
     const { uid, nome, email } = await req.json();
     const decoded = await verifyAuth(req);
 
-    if (decoded.role != 'admin') {
+    if (!uid) {
+      return NextResponse.json({ message: 'UID obrigatório' }, { status: 400 });
+    }
+
+    const isSelf = decoded.uid === uid;
+    const isAdmin = decoded.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    if (!uid) {
-      return NextResponse.json({ success: false, message: 'UID obrigatório' }, { status: 400 });
-    }
-
-    // 1. Atualiza no Auth
+    // Atualiza no Auth
     await adminAuth.updateUser(uid, {
       ...(nome && { displayName: nome }),
       ...(email && { email })
     });
 
-    // 2. Atualiza no Database
+    // Atualiza no DB
     await adminDB.ref(`users/${uid}`).update({
       ...(nome && { nome }),
       ...(email && { email }),
@@ -31,6 +33,6 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: error.message || 'Erro ao atualizar usuário' }, { status: 500 });
   }
 }

@@ -1,6 +1,5 @@
-// POST, PUT, DELETE
 import { NextResponse } from 'next/server';
-import { createEvent, updateEvent, softDeleteEvent } from '@/services/event.service';
+import { createEvent, updateEvent, softDeleteEvent, listEvents } from '@/services/event.service';
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +33,19 @@ export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
     const result = await softDeleteEvent(id);
+    return NextResponse.json(result);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: false, message: 'Erro inesperado.' }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const result = await listEvents(req);
     return NextResponse.json(result);
   } catch (error: unknown) {
     if (error instanceof Error) {

@@ -1,22 +1,32 @@
-// app/api/users/reset-password/route.ts
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { verifyAuth } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { uid } = await req.json();
+    const decoded = await verifyAuth(req);
 
-    if (!email) {
-      return NextResponse.json({ success: false, message: 'Email obrigatório' }, { status: 400 });
+    if (!uid) {
+      return NextResponse.json({ message: 'UID obrigatório' }, { status: 400 });
     }
 
-    const link = await adminAuth.generatePasswordResetLink(email);
+    const isSelf = decoded.uid === uid;
+    const isAdmin = decoded.role === 'admin';
 
-    // por enquanto só log
+    if (!isSelf && !isAdmin) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
+    }
+
+    const user = await adminAuth.getUser(uid);
+
+    const link = await adminAuth.generatePasswordResetLink(user.email!);
+
+    // TODO: enviar email
     console.log('RESET LINK:', link);
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message || 'Erro ao resetar senha' }, { status: 500 });
   }
 }

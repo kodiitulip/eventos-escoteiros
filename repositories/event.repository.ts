@@ -23,7 +23,10 @@ export async function deleteEventFromDB(id: string) {
   await set(ref(database, `${EVENTS_PATH}/${id}`), null);
 }
 
-export async function findEventByNameAndDate(nome: string, dataInicio: string): Promise<Event | null> {
+export async function findEventByNameAndDate(
+  nome: string,
+  dataInicio: string | number
+): Promise<(Event & { id: string }) | null> {
   const snapshot = await get(ref(database, EVENTS_PATH));
   if (!snapshot.exists()) return null;
 
@@ -37,4 +40,17 @@ export async function findEventByNameAndDate(nome: string, dataInicio: string): 
   }
 
   return null;
+}
+
+export async function listAllEvents(): Promise<(Event & { id: string })[]> {
+  const snapshot = await get(ref(database, EVENTS_PATH));
+
+  if (!snapshot.exists()) return [];
+
+  const events = snapshot.val();
+
+  return Object.entries(events).map(([id, data]: any) => ({
+    id,
+    ...data
+  }));
 }
