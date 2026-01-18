@@ -6,40 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { UserPlus, Search, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Search, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
 import { ScoutEventsDialog } from '@/components/ScoutEventsDialog';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../providers/auth-provider';
-
-// Mock data for UI shell
-const mockScouts = [
-  { id: 's1', name: 'Ana Silva', ramo: 'lobinho' as const, active: true },
-  { id: 's2', name: 'Bruno Santos', ramo: 'escoteiro' as const, active: true },
-  { id: 's3', name: 'Carla Oliveira', ramo: 'senior' as const, active: true },
-  { id: 's4', name: 'Daniel Costa', ramo: 'pioneiro' as const, active: true },
-  { id: 's5', name: 'Eduardo Lima', ramo: 'lobinho' as const, active: false },
-  { id: 's6', name: 'Fernanda Souza', ramo: 'escoteiro' as const, active: true }
-];
+import { ScoutBranches, ScoutData } from '@/schemas/escoteiro';
+import { fetchAllScouts } from '@/schemas/queries';
+import LoadingPage from '../loading';
+import { EditForm, RegisterForm } from './forms';
+import { removeScout } from '@/schemas/actions';
 
 export default function Scouts() {
   const { user, loading } = useAuth();
@@ -49,69 +32,43 @@ export default function Scouts() {
     if (!loading && !user) router.push('/auth');
   }, [user, loading, router]);
 
-  const { toast } = useToast();
-  const [scouts, setScouts] = useState(mockScouts);
+  const [scouts, setScouts] = useState<(ScoutData & { id: string })[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [branchFilter, setBranchFilter] = useState<string>('todos');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newScout, setNewScout] = useState({ name: '', ramo: '' });
+  const [branchFilter, setBranchFilter] = useState<ScoutBranches | 'geral'>('geral');
+  const [editOpen, setEditOpen] = useState<boolean>(false);
+  const [editData, setEditData] = useState<ScoutData & { id: string }>();
 
-  const filteredScouts = scouts.filter((scout) => {
-    const matchesSearch = scout.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesBranch = branchFilter === 'todos' || scout.ramo === branchFilter;
-    const isActive = scout.active;
-    return matchesSearch && matchesBranch && isActive;
+  const filteredScouts = scouts.filter(({ nome, ramo }) => {
+    const matchesSearch = nome.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesBranch = branchFilter === 'geral' || ramo === branchFilter;
+    return matchesSearch && matchesBranch;
   });
 
-  const handleAddScout = () => {
-    if (!newScout.name || !newScout.ramo) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha nome e ramo do escoteiro.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setScouts((prev) => [
-      ...prev,
-      {
-        id: `s${Date.now()}`,
-        name: newScout.name,
-        ramo: newScout.ramo as 'lobinho' | 'escoteiro' | 'senior' | 'pioneiro',
-        active: true
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await fetchAllScouts();
+        setScouts(data);
+      } catch (err) {
+        console.error('Error: ', err);
       }
-    ]);
+    };
+    load();
+  }, []);
 
-    toast({
-      title: 'Escoteiro cadastrado!',
-      description: `${newScout.name} foi adicionado ao sistema.`
-    });
-
-    setNewScout({ name: '', ramo: '' });
-    setIsDialogOpen(false);
-  };
-
-  const handleDeactivateScout = (scoutId: string) => {
-    setScouts((prev) => prev.map((s) => (s.id === scoutId ? { ...s, active: false } : s)));
-    toast({
-      title: 'Escoteiro desativado',
-      description: 'O escoteiro foi marcado como inativo.'
-    });
+  const handleRemoveScout = (idToRemove: string) => {
+    setScouts((prev) => prev.filter(({ id }) => id !== idToRemove));
+    removeScout(idToRemove);
   };
 
   const branchCounts = {
-    lobinho: scouts.filter((s) => s.ramo === 'lobinho' && s.active).length,
-    escoteiro: scouts.filter((s) => s.ramo === 'escoteiro' && s.active).length,
-    senior: scouts.filter((s) => s.ramo === 'senior' && s.active).length,
-    pioneiro: scouts.filter((s) => s.ramo === 'pioneiro' && s.active).length
+    lobinho: scouts.filter(({ ramo }) => ramo === 'lobinho').length,
+    escoteiro: scouts.filter(({ ramo }) => ramo === 'escoteiro').length,
+    senior: scouts.filter(({ ramo }) => ramo === 'senior').length,
+    pioneiro: scouts.filter(({ ramo }) => ramo === 'pioneiro').length,
   };
 
-  return (
-    <AppLayout>
-      <div className='flex h-full items-center justify-center'>Não implementado</div>
-    </AppLayout>
-  );
+  if (loading) return <LoadingPage />;
 
   return (
     <AppLayout>
@@ -121,59 +78,14 @@ export default function Scouts() {
             <h1 className='text-2xl md:text-3xl font-bold text-foreground'>Escoteiros</h1>
             <p className='text-muted-foreground mt-1'>Gerencie os escoteiros do grupo.</p>
           </div>
-          <Dialog
-            open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className='mr-2 h-4 w-4' />
-                Novo Escoteiro
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Cadastrar Escoteiro</DialogTitle>
-                <DialogDescription>Adicione um novo escoteiro ao sistema.</DialogDescription>
-              </DialogHeader>
-              <div className='space-y-4 py-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='scout-name'>Nome</Label>
-                  <Input
-                    id='scout-name'
-                    placeholder='Nome completo'
-                    value={newScout.name}
-                    onChange={(e) => setNewScout((prev) => ({ ...prev, name: e.target.value }))}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='scout-branch'>Ramo</Label>
-                  <Select
-                    value={newScout.ramo}
-                    onValueChange={(value) => setNewScout((prev) => ({ ...prev, ramo: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione o ramo' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='lobinho'>Lobinho</SelectItem>
-                      <SelectItem value='escoteiro'>Escoteiro</SelectItem>
-                      <SelectItem value='senior'>Sênior</SelectItem>
-                      <SelectItem value='pioneiro'>Pioneiro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleAddScout}>Cadastrar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <RegisterForm setScouts={setScouts} />
+          <EditForm
+            setScouts={setScouts}
+            scoutData={editData}
+            open={editOpen}
+            setOpen={setEditOpen}
+          />
         </div>
-
         <div className='grid gap-4 md:grid-cols-4'>
           <Card className='bg-lobinho/10 border-lobinho/20'>
             <CardHeader className='pb-2'>
@@ -212,7 +124,7 @@ export default function Scouts() {
         <Card>
           <CardHeader>
             <CardTitle className='text-lg'>Lista de Escoteiros</CardTitle>
-            <CardDescription>{filteredScouts.length} escoteiros ativos</CardDescription>
+            <CardDescription>{filteredScouts.length} escoteiros encontrados</CardDescription>
           </CardHeader>
           <CardContent className='space-y-4'>
             <div className='flex flex-col sm:flex-row gap-4'>
@@ -227,12 +139,12 @@ export default function Scouts() {
               </div>
               <Select
                 value={branchFilter}
-                onValueChange={setBranchFilter}>
+                onValueChange={(value) => setBranchFilter(value as ScoutBranches)}>
                 <SelectTrigger className='w-full sm:w-[180px]'>
                   <SelectValue placeholder='Filtrar por ramo' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='todos'>Todos os ramos</SelectItem>
+                  <SelectItem value='geral'>Todos os ramos</SelectItem>
                   <SelectItem value='lobinho'>Lobinho</SelectItem>
                   <SelectItem value='escoteiro'>Escoteiro</SelectItem>
                   <SelectItem value='senior'>Sênior</SelectItem>
@@ -247,26 +159,20 @@ export default function Scouts() {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Ramo</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead className='text-right'>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredScouts.map((scout) => (
                     <TableRow key={scout.id}>
-                      <TableCell className='font-medium'>{scout.name}</TableCell>
+                      <TableCell className='font-medium'>{scout.nome}</TableCell>
                       <TableCell>
                         <BranchBadge branch={scout.ramo} />
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={scout.active ? 'default' : 'secondary'}>
-                          {scout.active ? 'Ativo' : 'Inativo'}
-                        </Badge>
                       </TableCell>
                       <TableCell className='text-right'>
                         <div className='flex items-center justify-end gap-2'>
                           <ScoutEventsDialog
-                            scoutName={scout.name}
+                            scoutName={scout.nome}
                             scoutId={scout.id}
                           />
                           <DropdownMenu>
@@ -278,15 +184,19 @@ export default function Scouts() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditData(scout);
+                                  setEditOpen(true);
+                                }}>
                                 <Pencil className='mr-2 h-4 w-4' />
                                 Editar
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='text-destructive'
-                                onClick={() => handleDeactivateScout(scout.id)}>
+                                onClick={() => handleRemoveScout(scout.id)}>
                                 <Trash2 className='mr-2 h-4 w-4' />
-                                Desativar
+                                Deletar
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

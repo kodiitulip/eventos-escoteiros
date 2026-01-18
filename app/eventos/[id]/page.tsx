@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/app/providers/auth-provider';
 import { EventData } from '@/types/event.type';
-import { fetchEventByID } from '../queries';
+import { fetchEventByID } from '@/schemas/queries';
 
 type Participant = {
   id: string;
@@ -25,20 +25,6 @@ type Participant = {
   payment_status: 'pago' | 'pendente';
   attended: boolean | null;
 };
-
-const mockParticipants: Participant[] = [
-  { id: 'p1', scout_id: 's1', scout_name: 'Ana Silva', ramo: 'lobinho', payment_status: 'pago', attended: null },
-  {
-    id: 'p2',
-    scout_id: 's2',
-    scout_name: 'Bruno Santos',
-    ramo: 'escoteiro',
-    payment_status: 'pendente',
-    attended: null
-  },
-  { id: 'p3', scout_id: 's3', scout_name: 'Carla Oliveira', ramo: 'senior', payment_status: 'pago', attended: null },
-  { id: 'p4', scout_id: 's4', scout_name: 'Daniel Costa', ramo: 'pioneiro', payment_status: 'pendente', attended: null }
-];
 
 export default function EventDetail() {
   const { user, loading } = useAuth();

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarPlus, Search, Calendar, LoaderIcon } from 'lucide-react';
+import { CalendarPlus, Search, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
@@ -14,7 +14,8 @@ import { ptBR } from 'date-fns/locale';
 import { useAuth } from '../providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { EventData } from '@/types/event.type';
-import { fetchAllEvents } from './queries';
+import { fetchAllEvents } from '@/schemas/queries';
+import LoadingPage from '../loading';
 
 export default function Events() {
   const { user, loading } = useAuth();
@@ -50,21 +51,10 @@ export default function Events() {
       acc[year].push(event);
       return acc;
     },
-    {} as Record<number, EventData[]>
+    {} as Record<number, EventData[]>,
   );
 
-  if (loading)
-    return (
-      <AppLayout>
-        <div className='flex h-full items-center justify-center'>
-          <LoaderIcon
-            className='animate-spin'
-            size={40}
-          />
-          <span className='sr-only'>Carregando</span>
-        </div>
-      </AppLayout>
-    );
+  if (loading) return <LoadingPage />;
 
   if (!user) return null;
 

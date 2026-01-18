@@ -15,4 +15,10 @@ export interface EventData {
   tipo: EventType;
   createdAt: string;
   updatedAt: string;
+  inscritos: Record<
+    string,
+    {
+      pago: boolean;
+    }
+  >;
 }
