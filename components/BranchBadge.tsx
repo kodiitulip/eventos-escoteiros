@@ -1,34 +1,33 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-type Branch = 'lobinho' | 'escoteiro' | 'senior' | 'pioneiro' | 'geral';
+import { EventScoutBranches } from '@/schemas/escoteiro';
 
 interface BranchBadgeProps {
-  branch: Branch;
+  branch: EventScoutBranches;
   className?: string;
 }
 
-const branchConfig: Record<Branch, { label: string; className: string }> = {
+const branchConfig: Record<EventScoutBranches, { label: string; className: string }> = {
   lobinho: {
     label: 'Lobinho',
-    className: 'bg-lobinho text-lobinho-foreground hover:bg-lobinho/90'
+    className: 'bg-lobinho text-lobinho-foreground hover:bg-lobinho/90',
   },
   escoteiro: {
     label: 'Escoteiro',
-    className: 'bg-escoteiro text-escoteiro-foreground hover:bg-escoteiro/90'
+    className: 'bg-escoteiro text-escoteiro-foreground hover:bg-escoteiro/90',
   },
   senior: {
     label: 'Sênior',
-    className: 'bg-senior text-senior-foreground hover:bg-senior/90'
+    className: 'bg-senior text-senior-foreground hover:bg-senior/90',
   },
   pioneiro: {
     label: 'Pioneiro',
-    className: 'bg-pioneiro text-pioneiro-foreground hover:bg-pioneiro/90'
+    className: 'bg-pioneiro text-pioneiro-foreground hover:bg-pioneiro/90',
   },
   geral: {
     label: 'Geral',
-    className: 'bg-primary text-primary-foreground hover:bg-primary/90'
-  }
+    className: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  },
 };
 
 export function BranchBadge({ branch, className }: BranchBadgeProps) {

@@ -8,28 +8,47 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from './providers/auth-provider';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { get, ref } from 'firebase/database';
-import { database } from '@/lib/firebase';
+import { EventFormDataId, fetchAllEvents, fetchAllScouts } from '@/schemas/queries';
+import { daysBetween } from '@/lib/utils';
+
+type Stats = {
+  totalEvents: number;
+  upcomingEvents: EventFormDataId[];
+  totalScouts: number;
+  pendingPayments: number;
+};
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     totalEvents: 0,
-    upcomingEvents: 0,
+    upcomingEvents: [],
     totalScouts: 0,
-    pendingPayments: 0
+    pendingPayments: 0,
   });
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth');
 
     const load = async () => {
-      const eventsRef = ref(database, 'events');
-      const snap = await get(eventsRef);
-      if (!snap.exists()) return setStats((prev) => ({ ...prev, totalEvents: 0 }));
-      const data = snap.val();
-      setStats((prev) => ({ ...prev, totalEvents: Object.entries(data).length }));
+      const events = await fetchAllEvents();
+      const totalScouts = (await fetchAllScouts()).length;
+      const upcomingEvents = events.filter(({ dataInicio }) => daysBetween(dataInicio, new Date()) < 10);
+      const pendingPayments = events.reduce((prev, { participants }) => {
+        const pend = Object.values(participants ?? {}).reduce((acc, { payment }) => {
+          if (payment === 'pendente') acc += 1;
+          return acc;
+        }, 0);
+        prev += pend;
+        return prev;
+      }, 0);
+      setStats({
+        totalEvents: events.length,
+        upcomingEvents,
+        totalScouts,
+        pendingPayments,
+      });
     };
     load();
   }, [user, loading, router]);
@@ -75,13 +94,15 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>{stats.totalEvents}</div>
-              <p className='text-xs text-muted-foreground'>{stats.upcomingEvents} próximos eventos</p>
+              <p className='text-xs text-muted-foreground'>
+                {stats.upcomingEvents.length} evento(s) em menos de 10 dias
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>Escoteiros Ativos</CardTitle>
+              <CardTitle className='text-sm font-medium'>Escoteiros Cadastrados</CardTitle>
               <Users className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
             <CardContent>
@@ -125,7 +146,19 @@ export default function Dashboard() {
               <CardDescription>Eventos agendados para os próximos dias</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className='text-sm text-muted-foreground text-center py-8'>Nenhum evento próximo cadastrado.</p>
+              {stats.upcomingEvents.length === 0 && (
+                <p className='text-sm text-muted-foreground text-center py-8'>Nenhum evento próximo cadastrado.</p>
+              )}
+              <div className='flex flex-col gap-2 mb-3'>
+                {stats.upcomingEvents.map(({ id, nome }) => (
+                  <Button
+                    asChild
+                    variant='ghost'
+                    key={id + nome}>
+                    <Link href={`/eventos/${id}`}>{nome}</Link>
+                  </Button>
+                ))}
+              </div>
               <Button
                 variant='outline'
                 className='w-full'

@@ -9,19 +9,16 @@ import { CalendarPlus, Search, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useAuth } from '../providers/auth-provider';
 import { useRouter } from 'next/navigation';
-import { EventData } from '@/types/event.type';
-import { fetchAllEvents } from '@/schemas/queries';
+import { EventFormDataId, fetchAllEvents } from '@/schemas/queries';
 import LoadingPage from '../loading';
 
 export default function Events() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  const [events, setEvents] = useState<EventData[]>([]);
+  const [events, setEvents] = useState<EventFormDataId[]>([]);
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth');
@@ -51,7 +48,7 @@ export default function Events() {
       acc[year].push(event);
       return acc;
     },
-    {} as Record<number, EventData[]>,
+    {} as Record<number, EventFormDataId[]>,
   );
 
   if (loading) return <LoadingPage />;
@@ -127,8 +124,12 @@ export default function Events() {
                           <BranchBadge branch={tipo} />
                         </div>
                         <CardDescription className='flex items-center gap-1'>
-                          <Calendar className='h-3 w-3' />
-                          {format(new Date(dataInicio), "dd 'de' MMMM", { locale: ptBR })}
+                          <Calendar size={12} />
+
+                          {new Date(dataInicio).toLocaleString('pt-BR', {
+                            timeStyle: 'short',
+                            dateStyle: 'short',
+                          })}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>

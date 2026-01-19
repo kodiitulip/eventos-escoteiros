@@ -7,58 +7,111 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Calendar, Clock, Users, Receipt, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Users, UserPlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PaymentStatusBadge } from '@/components/PaymentStatusBadge';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/app/providers/auth-provider';
-import { EventData } from '@/types/event.type';
-import { fetchEventByID } from '@/schemas/queries';
-
-type Participant = {
-  id: string;
-  scout_id: string;
-  scout_name: string;
-  ramo: 'lobinho' | 'escoteiro' | 'senior' | 'pioneiro';
-  payment_status: 'pago' | 'pendente';
-  attended: boolean | null;
-};
+import { fetchAllScouts, fetchEventByID, ScoutDataId } from '@/schemas/queries';
+import { EventFormData, PaymentStatus } from '@/schemas/escoteiro';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { updateEvent } from '@/schemas/actions';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function EventDetail() {
-  const { user, loading } = useAuth();
+  const { user, loading: userLoading } = useAuth();
   const router = useRouter();
-  const { id } = useParams<{ id: EventData['id'] }>();
-  const [event, setEvent] = useState<EventData>();
+  const { id: eventId } = useParams<{ id: string }>();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [event, setEvent] = useState<EventFormData>();
+  const [participants, setParticipants] = useState<ScoutDataId[]>([]);
+  const [scouts, setScouts] = useState<ScoutDataId[]>([]);
 
   useEffect(() => {
-    if (!loading && !user) router.push('/auth');
+    if (!userLoading && !user) router.push('/auth');
     const load = async () => {
-      const eve = await fetchEventByID(id);
+      const eve = await fetchEventByID(eventId);
       if (!eve) notFound();
+      const scoutIds = Object.keys(eve.participants ?? {});
+      const scouts = await fetchAllScouts();
+      setScouts(
+        scouts
+          .filter(({ id, ramo }) => !scoutIds.includes(id) && (eve.tipo === 'geral' || eve.tipo === ramo))
+          .sort(({ nome: nomeA }, { nome: nomeB }) => (nomeA < nomeB ? 1 : -1)),
+      );
+      setParticipants(
+        scouts
+          .filter(({ id }) => scoutIds.includes(id))
+          .sort(({ nome: nomeA }, { nome: nomeB }) => (nomeA < nomeB ? 1 : -1)),
+      );
       setEvent(eve);
+      setLoading(false);
     };
     load();
-  }, [user, loading, router, id]);
+  }, [user, userLoading, router, eventId]);
 
   if (!event) return null;
 
   const isPastEvent = new Date(event.dataFim) < new Date();
   const dataInicio = new Date(event.dataInicio);
   const dataFim = new Date(event.dataFim);
-  const participants: Participant[] = [];
 
-  // const summary = {
-  //   total: participants.length,
-  //   paid: participants.filter((p) => p.payment_status === 'pago').length,
-  //   attended: participants.filter((p) => p.attended).length
-  // };
+  const togglePayment = (participantId: string, status: PaymentStatus) => {
+    const e = { ...event };
+    e.participants[participantId].payment = status;
+    setEvent(e);
+    updateEvent(eventId, e);
+  };
 
-  const togglePayment = (participantId: string) => {};
+  const excludeParticipant = (participantId: string) => {
+    const e = { ...event };
+    if (!e.participants) e.participants = {};
+    delete e.participants[participantId];
+    setEvent(e);
+    updateEvent(eventId, e);
+    setScouts((prev) =>
+      [...prev, ...participants.filter(({ id }) => id === participantId)].sort(({ nome: nomeA }, { nome: nomeB }) =>
+        nomeA < nomeB ? 1 : -1,
+      ),
+    );
+    setParticipants((prev) =>
+      prev
+        .filter(({ id }) => id !== participantId)
+        .sort(({ nome: nomeA }, { nome: nomeB }) => (nomeA < nomeB ? 1 : -1)),
+    );
+  };
 
-  const toggleAttendance = (participantId: string) => {
-    if (!isPastEvent) return;
+  const includeParticipant = (participantId: string) => {
+    const e = { ...event };
+    if (!e.participants) e.participants = {};
+    e.participants[participantId] = {
+      attended: false,
+      payment: 'pendente',
+    };
+    setEvent(e);
+    updateEvent(eventId, e);
+    setParticipants((prev) =>
+      [...prev, ...scouts.filter(({ id }) => id === participantId)].sort(({ nome: nomeA }, { nome: nomeB }) =>
+        nomeA < nomeB ? 1 : -1,
+      ),
+    );
+    setScouts((prev) =>
+      prev
+        .filter(({ id }) => id !== participantId)
+        .sort(({ nome: nomeA }, { nome: nomeB }) => (nomeA < nomeB ? 1 : -1)),
+    );
+  };
+
+  const toggleAttendance = (participantId: string, checked: boolean) => {
+    const e = { ...event };
+    e.participants[participantId].attended = checked;
+    setEvent(e);
+    updateEvent(eventId, e);
   };
 
   return (
@@ -73,11 +126,17 @@ export default function EventDetail() {
               <ArrowLeft className='h-4 w-4' />
             </Link>
           </Button>
-          <div className='flex-1'>
+          <div className='flex-1 flex justify-between'>
             <div className='flex items-center gap-3'>
               <h1 className='text-2xl md:text-3xl font-bold text-foreground'>{event.nome}</h1>
               <BranchBadge branch={event.tipo} />
             </div>
+            <Button asChild>
+              <Link href={`/eventos/${eventId}/edit`}>
+                <PencilIcon />
+                Editar
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -90,7 +149,10 @@ export default function EventDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-lg font-semibold'>{format(dataInicio, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+              <p className='text-lg font-semibold'>
+                {dataInicio.toLocaleDateString('pt-BR', { day: 'numeric', month: '2-digit' })} -{' '}
+                {dataFim.toLocaleDateString('pt-BR', { day: 'numeric', month: '2-digit' })}
+              </p>
             </CardContent>
           </Card>
 
@@ -103,7 +165,7 @@ export default function EventDetail() {
             </CardHeader>
             <CardContent>
               <p className='text-lg font-semibold'>
-                {dataInicio.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })} -
+                {dataInicio.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })} -{' '}
                 {dataFim.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })}
               </p>
             </CardContent>
@@ -117,7 +179,7 @@ export default function EventDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-lg font-semibold'>{event.inscritosCount}</p>
+              <p className='text-lg font-semibold'>{participants.length}</p>
             </CardContent>
           </Card>
 
@@ -141,14 +203,22 @@ export default function EventDetail() {
               <div>
                 <CardTitle>Participantes</CardTitle>
               </div>
-              <div className='flex gap-2'>
-                <Button
-                  variant='outline'
-                  size='sm'>
-                  <FileText className='mr-2 h-4 w-4' />
-                  Relatório
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline'>
+                    <UserPlusIcon size={12} /> Adicionar Escoteiro
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {scouts.map(({ id, nome }) => (
+                    <DropdownMenuItem
+                      key={id + nome}
+                      onClick={() => includeParticipant(id)}>
+                      {nome}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
           <CardContent>
@@ -164,36 +234,54 @@ export default function EventDetail() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {participants.map((participant) => (
-                    <TableRow key={participant.id}>
-                      <TableCell className='font-medium'>{participant.scout_name}</TableCell>
-                      <TableCell>
-                        <BranchBadge branch={participant.ramo} />
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => togglePayment(participant.id)}>
-                          <PaymentStatusBadge status={participant.payment_status} />
-                        </button>
-                      </TableCell>
-                      {isPastEvent && (
+                  {!loading
+                    && participants.map(({ nome, ramo, id }) => (
+                      <TableRow key={id}>
+                        <TableCell className='font-medium'>{nome}</TableCell>
                         <TableCell>
-                          <Checkbox
-                            checked={participant.attended || false}
-                            onCheckedChange={() => toggleAttendance(participant.id)}
-                          />
+                          <BranchBadge branch={ramo} />
                         </TableCell>
-                      )}
-                      <TableCell className='text-right'>
-                        {participant.payment_status === 'pago' && (
-                          <Button
-                            variant='ghost'
-                            size='sm'>
-                            <Receipt className='h-4 w-4' />
-                          </Button>
+                        <TableCell>
+                          {event.participants[id] && (
+                            <Select
+                              defaultValue={event.participants[id].payment}
+                              onValueChange={(value) => togglePayment(id, value as PaymentStatus)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value='pago'>
+                                  <PaymentStatusBadge status='pago' />
+                                </SelectItem>
+                                <SelectItem value='isento'>
+                                  <PaymentStatusBadge status='isento' />
+                                </SelectItem>
+                                <SelectItem value='pendente'>
+                                  <PaymentStatusBadge status='pendente' />
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        {isPastEvent && (
+                          <TableCell>
+                            <Checkbox
+                              checked={event.participants[id].attended || false}
+                              onCheckedChange={(checked) =>
+                                toggleAttendance(id, checked === 'indeterminate' ? false : checked)
+                              }
+                            />
+                          </TableCell>
                         )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell className='text-right w-min'>
+                          <Button
+                            onClick={() => excludeParticipant(id)}
+                            variant='ghost'>
+                            <TrashIcon />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>

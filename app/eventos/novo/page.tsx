@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,19 +13,15 @@ import { ArrowLeft, CalendarPlus } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/providers/auth-provider';
-import { EventData, EventType } from '@/types/event.type';
-import { push, ref, set } from 'firebase/database';
-import { database } from '@/lib/firebase';
-
-export type EventFormData = {
-  nome: string;
-  dataInicio: string;
-  dataFim: string;
-  horaInicio: string;
-  horaFim: string;
-  valor: number;
-  tipo: EventType;
-};
+import { useForm } from 'react-hook-form';
+import {
+  EventFormDataInput,
+  EventFormDataOutput,
+  EventFormData,
+  ScoutBranches,
+  EventFormDataSchema,
+} from '@/schemas/escoteiro';
+import { pushEvent } from '@/schemas/actions';
 
 export default function CreateEvent() {
   const { user, loading } = useAuth();
@@ -36,59 +33,31 @@ export default function CreateEvent() {
 
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState<EventFormData>(() => {
-    const d = new Date();
-    return {
-      dataFim: d.toISOString(),
-      dataInicio: d.toISOString(),
-      horaFim: d.toISOString(),
-      horaInicio: d.toISOString(),
-      nome: '',
-      tipo: 'geral',
-      valor: 0
-    };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    trigger,
+    getValues,
+  } = useForm<EventFormDataInput, unknown, EventFormDataOutput>({
+    resolver: zodResolver(EventFormDataSchema),
+    defaultValues: { valor: 0, limiteVagas: 0, participants: {} },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!formData.nome || !formData.dataInicio || !formData.tipo) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha todos os campos obrigatórios.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
+  const handleAddEvent = async (data: EventFormData) => {
     try {
-      const newRef = push(ref(database, 'events'));
-      console.log(formData.dataInicio, formData.horaInicio);
-      const dataInicio = new Date(formData.dataInicio.concat(' ', formData.horaInicio));
-      const dataFim = new Date(formData.dataFim.concat(' ', formData.horaFim));
-      await set(newRef, {
-        dataInicio: dataInicio.toISOString(),
-        dataFim: dataFim.toISOString(),
-        nome: formData.nome,
-        tipo: formData.tipo,
-        valor: formData.valor,
-        ativo: dataFim > new Date(),
-        createdAt: new Date().toISOString()
-      } as EventData);
-
       toast({
-        title: 'Evento criado!',
-        description: 'O evento foi cadastrado com sucesso.'
+        title: 'Escoteiro cadastrado!',
+        description: `${data.nome} foi adicionado ao sistema.`,
       });
-
+      await pushEvent(data);
       router.push('/eventos');
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
       toast({
         title: 'Houve um erro desconhecido',
-        description: 'Tente novamente mais tarde',
-        variant: 'destructive'
+        description: error instanceof Error ? error.message : `${error}`,
+        variant: 'destructive',
       });
     }
   };
@@ -114,31 +83,50 @@ export default function CreateEvent() {
         <Card>
           <CardHeader>
             <CardTitle>Informações do Evento</CardTitle>
-            <CardDescription>
-              Preencha os dados do evento. Os participantes serão adicionados automaticamente com base no tipo de
-              evento.
-            </CardDescription>
+            <CardDescription>Preencha os dados do evento.</CardDescription>
           </CardHeader>
           <CardContent>
             <form
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(handleAddEvent, (data) => console.log(data, getValues()))}
               className='space-y-6'>
               <div className='space-y-2'>
                 <Label htmlFor='name'>Nome do Evento *</Label>
                 <Input
                   id='name'
-                  placeholder='Ex: Acampamento de Páscoa'
-                  value={formData.nome}
-                  required
-                  onChange={(e) => setFormData((prev) => ({ ...prev, nome: e.target.value }))}
+                  placeholder='Nome do Evento'
+                  {...register('nome')}
                 />
+                <span className='text-red-500 text-sm'>{errors.nome && errors.nome.message}</span>
+              </div>
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label htmlFor='addrs'>Local do Evento *</Label>
+                  <Input
+                    id='addrs'
+                    placeholder='Local do Evento'
+                    {...register('local')}
+                  />
+                  <span className='text-red-500 text-sm'>{errors.local && errors.local.message}</span>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='responsavel'>Responsável pelo Evento *</Label>
+                  <Input
+                    id='responsavel'
+                    placeholder='Nome Completo'
+                    {...register('responsavel')}
+                  />
+                  <span className='text-red-500 text-sm'>{errors.responsavel && errors.responsavel.message}</span>
+                </div>
               </div>
 
               <div className='space-y-2'>
                 <Label htmlFor='event_type'>Ramo do Evento *</Label>
                 <Select
-                  value={formData.tipo}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, tipo: value as EventType }))}>
+                  onValueChange={(value) => {
+                    setValue('tipo', value as ScoutBranches);
+                    trigger('tipo');
+                  }}
+                  {...register('tipo')}>
                   <SelectTrigger>
                     <SelectValue placeholder='Selecione o tipo' />
                   </SelectTrigger>
@@ -150,6 +138,7 @@ export default function CreateEvent() {
                     <SelectItem value='pioneiro'>Pioneiro</SelectItem>
                   </SelectContent>
                 </Select>
+                <span className='text-red-500 text-sm'>{errors.tipo && errors.tipo.message}</span>
               </div>
 
               <div className='grid gap-4 sm:grid-cols-2'>
@@ -157,59 +146,50 @@ export default function CreateEvent() {
                   <Label htmlFor='date'>Data Inicio *</Label>
                   <Input
                     id='date'
-                    type='date'
-                    value={formData.dataInicio}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, dataInicio: e.target.value }))}
+                    type='datetime-local'
+                    {...register('dataInicio')}
                   />
+                  <span className='text-red-500 text-sm'>{errors.dataInicio && errors.dataInicio.message}</span>
                 </div>
 
                 <div className='space-y-2'>
                   <Label htmlFor='date-end'>Data Fim *</Label>
                   <Input
                     id='date-end'
-                    type='date'
-                    value={formData.dataFim}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, dataFim: e.target.value }))}
+                    type='datetime-local'
+                    {...register('dataFim')}
                   />
+                  <span className='text-red-500 text-sm'>{errors.dataFim && errors.dataFim.message}</span>
                 </div>
               </div>
 
               <div className='grid gap-4 sm:grid-cols-2'>
                 <div className='space-y-2'>
-                  <Label htmlFor='start_time'>Horário de Início *</Label>
+                  <Label htmlFor='registration_fee'>Taxa de Inscrição (R$)</Label>
                   <Input
-                    id='start_time'
-                    type='time'
-                    value={formData.horaInicio}
-                    required
-                    onChange={(e) => setFormData((prev) => ({ ...prev, horaInicio: e.target.value }))}
+                    id='registration_fee'
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    placeholder='0.00'
+                    {...register('valor', { valueAsNumber: true })}
                   />
+                  <span className='text-red-500 text-sm'>{errors.valor && errors.valor.message}</span>
+                  <p className='text-xs text-muted-foreground'>Deixe em branco ou 0 para eventos gratuitos.</p>
                 </div>
-
                 <div className='space-y-2'>
-                  <Label htmlFor='end_time'>Horário de Término *</Label>
+                  <Label htmlFor='vagas'>Limite de Vagas</Label>
                   <Input
-                    id='end_time'
-                    type='time'
-                    value={formData.horaFim}
-                    required
-                    onChange={(e) => setFormData((prev) => ({ ...prev, horaFim: e.target.value }))}
+                    id='vagas'
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    placeholder='0.00'
+                    {...register('limiteVagas', { valueAsNumber: true })}
                   />
+                  <span className='text-red-500 text-sm'>{errors.limiteVagas && errors.limiteVagas.message}</span>
+                  <p className='text-xs text-muted-foreground'>Deixe em branco ou 0 para não ter limite</p>
                 </div>
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='registration_fee'>Taxa de Inscrição (R$)</Label>
-                <Input
-                  id='registration_fee'
-                  type='number'
-                  min='0'
-                  step='0.01'
-                  placeholder='0.00'
-                  value={formData.valor}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, valor: Number(e.target.value) }))}
-                />
-                <p className='text-xs text-muted-foreground'>Deixe em branco ou 0 para eventos gratuitos.</p>
               </div>
 
               <div className='flex gap-4 pt-4'>
