@@ -17,7 +17,8 @@ import { ScoutBranches, ScoutData, ScoutDataInput, ScoutDataOutput, ScoutDataSch
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { PatternFormat } from 'react-number-format';
 
 export const RegisterForm = ({
   setScouts,
@@ -27,6 +28,7 @@ export const RegisterForm = ({
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors },
@@ -64,7 +66,7 @@ export const RegisterForm = ({
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <form onSubmit={handleSubmit(handleAddScout)}>
+        <form onSubmit={handleSubmit(handleAddScout, (data) => console.log(data, getValues()))}>
           <DialogHeader>
             <DialogTitle>Cadastrar Escoteiro</DialogTitle>
             <DialogDescription>Adicione um novo escoteiro ao sistema.</DialogDescription>
@@ -110,10 +112,24 @@ export const RegisterForm = ({
             </div>
             <div className='space-y-2'>
               <Label htmlFor='scout-num'>Telefone do Responsavel</Label>
-              <Input
-                id='scout-num'
-                placeholder='(85) XXXXX-XXXX'
-                {...register('telefone', { required: true })}
+              <Controller
+                control={control}
+                name='telefone'
+                render={({ field: { onChange, ...field } }) => (
+                  <Input asChild>
+                    <PatternFormat
+                      {...field}
+                      id='scout-num'
+                      format='+## (##) #####-####'
+                      allowEmptyFormatting
+                      onChange={(e) => {
+                        e.currentTarget.value = e.currentTarget.value.replace(/[ \(\)\-]/g, '');
+                        onChange(e);
+                        trigger('telefone');
+                      }}
+                    />
+                  </Input>
+                )}
               />
               <span className='text-red-500 text-sm '>{errors.telefone && errors.telefone.message}</span>
             </div>
@@ -155,6 +171,7 @@ export const EditForm = ({
 }) => {
   const { toast } = useToast();
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors },
@@ -244,10 +261,24 @@ export const EditForm = ({
             </div>
             <div className='space-y-2'>
               <Label htmlFor='scout-num'>Telefone do Responsavel</Label>
-              <Input
-                id='scout-num'
-                placeholder='(85) XXXXX-XXXX'
-                {...register('telefone', { required: true })}
+              <Controller
+                control={control}
+                name='telefone'
+                render={({ field: { onChange, ...field } }) => (
+                  <Input asChild>
+                    <PatternFormat
+                      {...field}
+                      id='scout-num'
+                      format='+## (##) #####-####'
+                      allowEmptyFormatting
+                      onChange={(e) => {
+                        e.currentTarget.value = e.currentTarget.value.replace(/[ \(\)\-]/g, '');
+                        onChange(e);
+                        trigger('telefone');
+                      }}
+                    />
+                  </Input>
+                )}
               />
               <span className='text-red-500 text-sm '>{errors.telefone && errors.telefone.message}</span>
             </div>
@@ -268,7 +299,7 @@ export const EditForm = ({
               onClick={() => closeForm(false)}>
               Cancelar
             </Button>
-            <Button type='submit'>Cadastrar</Button>
+            <Button type='submit'>Salvar</Button>
           </DialogFooter>
         </form>
       </DialogContent>

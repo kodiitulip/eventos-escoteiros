@@ -18,8 +18,8 @@ export const ScoutDataSchema = z.object({
     .nonoptional('Deve incluir o nome do escoteiro'),
   responsavel: z.string().optional(),
   ramo: ScoutBranchesEnum,
-  telefone: z.string().nonempty().nonoptional('Preencha as informações de contato'),
-  endereco: z.string().nonempty().nonoptional('Preencha as informações de contato'),
+  telefone: z.e164('Deve ser um telefone válido').nonempty().nonoptional('Preencha as informações de contato'),
+  endereco: z.string().nonempty('Preencha as informações de contato').nonoptional('Preencha as informações de contato'),
 });
 export type ScoutData = z.infer<typeof ScoutDataSchema>;
 export type ScoutDataInput = z.input<typeof ScoutDataSchema>;
