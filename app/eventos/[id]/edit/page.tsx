@@ -63,7 +63,7 @@ export default function CreateEvent() {
         description: 'Alterações foram salvas.',
       });
       updateEvent(eventId, data);
-      router.push('/eventos');
+      router.push(`/eventos/${eventId}`);
     } catch (error) {
       toast({
         title: 'Houve um erro desconhecido',

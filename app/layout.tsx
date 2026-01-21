@@ -4,17 +4,17 @@ import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: '14º GEABEG - Sistema de Eventos',
-  description: 'Sistema de gerenciamento de eventos do 14º Grupo de Escoteiros do Ar Brigadeiro Eduardo Gomes'
+  description: 'Sistema de gerenciamento de eventos do 14º Grupo de Escoteiros do Ar Brigadeiro Eduardo Gomes',
 };
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html lang='pt-br'>
-      <body className='antialiased'>
+      <body className='antialiased h-full'>
         <Providers>{children}</Providers>
       </body>
     </html>

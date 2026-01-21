@@ -3,11 +3,21 @@
 import { useEffect, useState } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Calendar, Clock, Users, UserPlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  UserPlusIcon,
+  PencilIcon,
+  TrashIcon,
+  MapIcon,
+  UserIcon,
+  UsersIcon,
+  FileSpreadsheetIcon,
+} from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PaymentStatusBadge } from '@/components/PaymentStatusBadge';
@@ -15,17 +25,19 @@ import { useAuth } from '@/app/providers/auth-provider';
 import { fetchAllScouts, fetchEventByID, ScoutDataId } from '@/schemas/queries';
 import { EventFormData, PaymentStatus } from '@/schemas/escoteiro';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { updateEvent } from '@/schemas/actions';
+import { removeEvent, updateEvent } from '@/schemas/actions';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EventDetail() {
   const { user, loading: userLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const { id: eventId } = useParams<{ id: string }>();
   const [loading, setLoading] = useState<boolean>(true);
   const [event, setEvent] = useState<EventFormData>();
@@ -107,6 +119,14 @@ export default function EventDetail() {
     );
   };
 
+  const remove = () => {
+    removeEvent(eventId);
+    router.push('/eventos');
+    toast({
+      title: 'Evento Removido',
+    });
+  };
+
   const toggleAttendance = (participantId: string, checked: boolean) => {
     const e = { ...event };
     e.participants[participantId].attended = checked;
@@ -131,12 +151,30 @@ export default function EventDetail() {
               <h1 className='text-2xl md:text-3xl font-bold text-foreground'>{event.nome}</h1>
               <BranchBadge branch={event.tipo} />
             </div>
-            <Button asChild>
-              <Link href={`/eventos/${eventId}/edit`}>
-                <PencilIcon />
-                Editar
-              </Link>
-            </Button>
+            <div className='flex gap-4'>
+              <Button
+                asChild
+                variant='outline'>
+                <Link href={`/eventos/${eventId}/edit`}>
+                  <PencilIcon />
+                  Editar
+                </Link>
+              </Button>
+              <Button
+                variant='outline'
+                asChild>
+                <Link href={`/eventos/${eventId}/print`}>
+                  <FileSpreadsheetIcon />
+                  Imprimir
+                </Link>
+              </Button>
+              <Button
+                variant='destructive'
+                onClick={remove}>
+                <TrashIcon />
+                Remover
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -145,13 +183,24 @@ export default function EventDetail() {
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium flex items-center gap-2'>
                 <Calendar className='h-4 w-4' />
-                Data
+                Data &amp; Hora
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className='text-lg font-semibold'>
-                {dataInicio.toLocaleDateString('pt-BR', { day: 'numeric', month: '2-digit' })} -{' '}
-                {dataFim.toLocaleDateString('pt-BR', { day: 'numeric', month: '2-digit' })}
+                {dataInicio.toLocaleString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}{' '}
+                -{' '}
+                {dataFim.toLocaleString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}
               </p>
             </CardContent>
           </Card>
@@ -159,27 +208,24 @@ export default function EventDetail() {
           <Card>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium flex items-center gap-2'>
-                <Clock className='h-4 w-4' />
-                Horário
+                <MapIcon className='h-4 w-4' />
+                Local do Evento
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-lg font-semibold'>
-                {dataInicio.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })} -{' '}
-                {dataFim.toLocaleTimeString('pt-BR', { hour: 'numeric', minute: '2-digit' })}
-              </p>
+              <p className='text-lg font-semibold'>{event.local}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium flex items-center gap-2'>
-                <Users className='h-4 w-4' />
-                Participantes
+                <UserIcon className='h-4 w-4' />
+                Responsável
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-lg font-semibold'>{participants.length}</p>
+              <p className='text-lg font-semibold'>{event.responsavel}</p>
             </CardContent>
           </Card>
 
@@ -202,6 +248,13 @@ export default function EventDetail() {
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
               <div>
                 <CardTitle>Participantes</CardTitle>
+                <CardDescription className='flex items-end mt-1 gap-2'>
+                  <UsersIcon size={16} />
+                  <span>
+                    {participants.length}
+                    {event.limiteVagas > 0 && ' / ' + event.limiteVagas} participantes
+                  </span>
+                </CardDescription>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

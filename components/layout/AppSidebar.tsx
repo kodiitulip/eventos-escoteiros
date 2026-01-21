@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-  useSidebar
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { ScoutLogoX256 } from '../scout-logo';
@@ -25,7 +25,7 @@ const menuItems = [
   { title: 'Início', url: '/', icon: Home },
   { title: 'Eventos', url: '/eventos', icon: Calendar },
   { title: 'Escoteiros', url: '/escoteiros', icon: Users },
-  { title: 'Relatórios', url: '/relatorios', icon: FileText }
+  // { title: 'Relatórios', url: '/relatorios', icon: FileText }
 ];
 
 export function AppSidebar() {
