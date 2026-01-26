@@ -1,6 +1,7 @@
 import { database } from '@/lib/firebase';
 import { update, ref, push, remove } from '@firebase/database';
 import { EventFormData, ScoutData } from './escoteiro';
+import { RegisterData } from './auth';
 
 export const pushScout = async (data: ScoutData) => {
   const scoutRef = ref(database, 'escoteiros');
@@ -32,4 +33,20 @@ export const updateEvent = (id: string, data: Partial<EventFormData>) => {
 export const removeEvent = (id: string) => {
   const eventRef = ref(database, `events/${id}`);
   remove(eventRef);
+};
+
+export const pushAccess = async ({ email }: RegisterData) => {
+  const accessRef = ref(database, 'access');
+  const newRef = await push(accessRef, { email });
+  return newRef.key;
+};
+
+export const removeAccess = async (uid: string) => {
+  const res = await fetch('/api/admin/user-delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error: string }).error);
 };

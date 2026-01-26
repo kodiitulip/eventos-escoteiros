@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BranchBadge } from '@/components/BranchBadge';
-import { ScoutEventsDialog } from '@/components/ScoutEventsDialog';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../providers/auth-provider';
 import { ScoutBranches, ScoutData } from '@/schemas/escoteiro';
