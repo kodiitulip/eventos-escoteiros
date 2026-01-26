@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
-import { pushAccess } from '@/schemas/actions';
 import { RegisterData, RegisterDataInput, RegisterDataOutput, RegisterSchema } from '@/schemas/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -39,7 +38,10 @@ export default function RegisterPage() {
   const handleRegister = async (data: RegisterData) => {
     try {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
-      router.push('/acessos');
+      toast({
+        title: 'Usuário Criado',
+      });
+      router.push('/');
     } catch (error) {
       toast({
         title: 'Houve um erro ao Registrar a conta',

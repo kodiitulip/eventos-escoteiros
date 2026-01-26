@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, FileText, Users, Home, LogOut } from 'lucide-react';
+import { Calendar, Users, Home, LogOut, UserPlus2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -25,7 +25,7 @@ const menuItems = [
   { title: 'Início', url: '/', icon: Home },
   { title: 'Eventos', url: '/eventos', icon: Calendar },
   { title: 'Escoteiros', url: '/escoteiros', icon: Users },
-  // { title: 'Relatórios', url: '/relatorios', icon: FileText }
+  { title: 'Registrar Acesso', url: '/auth/register', icon: UserPlus2 },
 ];
 
 export function AppSidebar() {
